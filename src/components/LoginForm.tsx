@@ -1,19 +1,11 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { EyeIcon, EyeOffIcon, Lock, Mail } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -23,8 +15,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -34,39 +26,21 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
-    
-    try {
-      // Simulate API call
-      console.log("Login attempt with:", data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Success notification
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to the application!",
-      });
-    } catch (error) {
-      // Error notification
-      toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
-      console.error("Login error:", error);
-    } finally {
+    // Simulate API call
+    console.log("Login attempt with:", values);
+    setTimeout(() => {
       setIsLoading(false);
-    }
-  };
-
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+      alert("Login functionality would connect to your auth system here");
+    }, 1000);
+  }
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="w-full max-w-md mx-auto space-y-6 p-6 bg-white dark:bg-gray-950 rounded-lg shadow-md">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
-        <p className="text-sm text-gray-500">Enter your credentials to access your account</p>
+        <h1 className="text-3xl font-bold">Welcome back</h1>
+        <p className="text-gray-500 dark:text-gray-400">Enter your credentials to sign in</p>
       </div>
 
       <Form {...form}>
@@ -78,7 +52,14 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="your.email@example.com" {...field} />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="example@email.com"
+                      className="pl-10"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,22 +74,23 @@ export function LoginForm() {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      className="pl-10 pr-10"
                       {...field}
                     />
                     <Button
                       type="button"
                       variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-1 hover:bg-transparent"
-                      onClick={togglePasswordVisibility}
+                      size="icon"
+                      className="absolute right-0 top-0 h-10 w-10 px-0"
+                      onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
+                        <EyeOffIcon className="h-4 w-4" />
                       ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
+                        <EyeIcon className="h-4 w-4" />
                       )}
                       <span className="sr-only">
                         {showPassword ? "Hide password" : "Show password"}
@@ -121,40 +103,23 @@ export function LoginForm() {
             )}
           />
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="remember"
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <label htmlFor="remember" className="text-sm text-gray-600">
-                Remember me
-              </label>
-            </div>
-            <a href="#" className="text-sm font-medium text-primary hover:text-primary/80">
+          <div className="flex justify-end">
+            <Button type="button" variant="link" className="px-0 font-normal">
               Forgot password?
-            </a>
+            </Button>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign In"
-            )}
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </Form>
 
-      <div className="mt-4 text-center text-sm">
+      <div className="text-center text-sm">
         Don't have an account?{" "}
-        <a href="#" className="font-medium text-primary hover:text-primary/80">
-          Create one now
-        </a>
+        <Button variant="link" className="p-0 font-normal">
+          Sign up
+        </Button>
       </div>
     </div>
   );
