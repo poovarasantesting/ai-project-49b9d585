@@ -1,15 +1,20 @@
-import { Calculator } from "./components/Calculator";
-import { ThemeProvider } from "./components/theme-provider";
-import { Toaster } from "./components/ui/toaster";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import LoginPage from "@/pages/LoginPage";
+import Dashboard from "@/pages/Dashboard";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Calculator />
+    <Router>
+      <div className="min-h-screen bg-background">
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+        <Toaster />
       </div>
-      <Toaster />
-    </ThemeProvider>
+    </Router>
   );
 }
 

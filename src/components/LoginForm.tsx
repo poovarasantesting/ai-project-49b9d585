@@ -1,131 +1,105 @@
 import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { EyeIcon, EyeOffIcon, LockKeyhole, Mail } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters",
-  }),
-});
+// Test user credentials
+export const TEST_USERS = [
+  { id: 1, username: "admin", password: "admin123", role: "Administrator" },
+  { id: 2, username: "user", password: "user123", role: "Regular User" },
+  { id: 3, username: "guest", password: "guest123", role: "Guest" },
+];
 
 export function LoginForm() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call
-    console.log("Login attempt with:", values);
-    
     setTimeout(() => {
-      // Login successful message would go here in a real app
-      console.log("Login successful!");
+      const user = TEST_USERS.find(
+        (user) => user.username === username && user.password === password
+      );
+
+      if (user) {
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${user.username}! (${user.role})`,
+        });
+        
+        // Store user in localStorage (in a real app, you would use a more secure method)
+        localStorage.setItem("currentUser", JSON.stringify(user));
+        
+        // Redirect to dashboard
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Login failed",
+          description: "Invalid username or password. Try one of the test accounts.",
+          variant: "destructive",
+        });
+      }
       setIsLoading(false);
-    }, 1500);
-  }
+    }, 1000);
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
-        <CardDescription className="text-center">
-          Enter your email and password to sign in
+      <CardHeader>
+        <CardTitle>Login</CardTitle>
+        <CardDescription>
+          Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                      <Input 
-                        placeholder="your.email@example.com" 
-                        className="pl-10" 
-                        {...field} 
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        className="pl-10 pr-10"
-                        {...field}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-10 w-10"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? 
-                          <EyeOffIcon className="h-4 w-4" /> : 
-                          <EyeIcon className="h-4 w-4" />
-                        }
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+        <form onSubmit={handleLogin}>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Log in"}
             </Button>
-          </form>
-        </Form>
+          </div>
+        </form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
-        <div className="text-sm text-center text-muted-foreground">
-          <a href="#" className="hover:text-primary underline underline-offset-4">Forgot password?</a>
-        </div>
-        <div className="text-sm text-center text-muted-foreground">
-          Don't have an account?{" "}
-          <a href="#" className="hover:text-primary underline underline-offset-4">
-            Sign up
-          </a>
+      <CardFooter className="flex flex-col items-start">
+        <div className="text-sm text-muted-foreground mt-2">
+          <strong>Test credentials:</strong>
+          <ul className="list-disc list-inside mt-1">
+            {TEST_USERS.map((user) => (
+              <li key={user.id}>
+                <span className="font-medium">{user.role}:</span> {user.username} / {user.password}
+              </li>
+            ))}
+          </ul>
         </div>
       </CardFooter>
     </Card>
