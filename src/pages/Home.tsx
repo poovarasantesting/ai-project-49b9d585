@@ -1,27 +1,25 @@
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Brain } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold mb-6">Welcome to Our App</h1>
-        <p className="text-gray-600 mb-8">
-          Please register or login to access your dashboard.
-        </p>
-        <div className="space-y-4">
-          <Link
-            to="/register"
-            className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-          >
-            Register
-          </Link>
-          <Link
-            to="/login"
-            className="block w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition-colors"
-          >
-            Login
-          </Link>
+    <div className="container mx-auto max-w-6xl px-4 py-16">
+      <div className="flex flex-col items-center justify-center text-center">
+        <div className="mb-8 rounded-full bg-primary/10 p-4">
+          <Brain size={48} className="text-primary" />
         </div>
+        <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">
+          Logical Tasks Generator
+        </h1>
+        <p className="mb-8 max-w-[42rem] text-lg text-muted-foreground">
+          Generate logical reasoning tasks, puzzles, and challenges to improve critical thinking skills.
+        </p>
+        <Link to="/task-generator">
+          <Button size="lg">
+            Start Generating Tasks
+          </Button>
+        </Link>
       </div>
     </div>
   );

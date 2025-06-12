@@ -1,19 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import Register from "@/pages/Register";
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
+import Home from "@/pages/Home";
+import TaskGenerator from "@/pages/TaskGenerator";
 
-export default function App() {
+function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/task-generator" element={<TaskGenerator />} />
+        </Routes>
+      </main>
       <Toaster />
     </BrowserRouter>
   );
 }
+
+export default App;
