@@ -1,11 +1,11 @@
-import { LoginForm } from "./components/LoginForm";
-import { Toaster } from "@/components/ui/toaster";
+import { useState } from "react";
+import { Calculator } from "./components/Calculator";
+import "./App.css";
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <LoginForm />
-      <Toaster />
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <Calculator />
     </div>
   );
 }

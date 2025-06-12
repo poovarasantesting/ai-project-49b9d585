@@ -1,291 +1,195 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
-import { X, Divide, Minus, Plus, Equal, Delete } from "lucide-react";
-import { cn } from "../lib/utils";
+import { X, Divide, Minus, Plus, Equal } from "lucide-react";
 
 export function Calculator() {
   const [display, setDisplay] = useState("0");
-  const [previousValue, setPreviousValue] = useState<number | null>(null);
-  const [operation, setOperation] = useState<string | null>(null);
-  const [resetDisplay, setResetDisplay] = useState(false);
-  const { toast } = useToast();
+  const [firstOperand, setFirstOperand] = useState<number | null>(null);
+  const [operator, setOperator] = useState<string | null>(null);
+  const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
 
-  const handleNumberClick = (number: string) => {
-    if (display === "0" || resetDisplay) {
-      setDisplay(number);
-      setResetDisplay(false);
-    } else if (display.length < 12) {
-      // Limit input to prevent overflow
-      setDisplay(display + number);
+  const inputDigit = (digit: string) => {
+    if (waitingForSecondOperand) {
+      setDisplay(digit);
+      setWaitingForSecondOperand(false);
     } else {
-      toast({
-        description: "Maximum input length reached",
-        variant: "destructive",
-      });
+      setDisplay(display === "0" ? digit : display + digit);
     }
   };
 
-  const handleDecimalClick = () => {
-    if (resetDisplay) {
+  const inputDecimal = () => {
+    if (waitingForSecondOperand) {
       setDisplay("0.");
-      setResetDisplay(false);
+      setWaitingForSecondOperand(false);
       return;
     }
-    
+
     if (!display.includes(".")) {
       setDisplay(display + ".");
     }
   };
 
-  const handleOperationClick = (op: string) => {
-    if (previousValue === null) {
-      setPreviousValue(parseFloat(display));
-    } else if (operation) {
-      const result = calculate();
-      setPreviousValue(result);
-      setDisplay(String(result));
-    }
-    
-    setOperation(op);
-    setResetDisplay(true);
-  };
-
-  const handleEqualsClick = () => {
-    if (previousValue === null || operation === null) return;
-    
-    const result = calculate();
-    setDisplay(String(result));
-    setPreviousValue(null);
-    setOperation(null);
-    setResetDisplay(true);
-  };
-
-  const calculate = (): number => {
-    const current = parseFloat(display);
-    let result = 0;
-    
-    switch (operation) {
-      case "+":
-        result = previousValue! + current;
-        break;
-      case "-":
-        result = previousValue! - current;
-        break;
-      case "×":
-        result = previousValue! * current;
-        break;
-      case "÷":
-        if (current === 0) {
-          toast({
-            description: "Cannot divide by zero",
-            variant: "destructive",
-          });
-          return previousValue!;
-        }
-        result = previousValue! / current;
-        break;
-      default:
-        return current;
-    }
-    
-    // Handle decimal precision and rounding
-    return Math.round(result * 1000000000) / 1000000000;
-  };
-
-  const handleClear = () => {
+  const clearDisplay = () => {
     setDisplay("0");
-    setPreviousValue(null);
-    setOperation(null);
-    setResetDisplay(false);
+    setFirstOperand(null);
+    setOperator(null);
+    setWaitingForSecondOperand(false);
   };
 
-  const handleDelete = () => {
-    if (display.length === 1 || (display.length === 2 && display.startsWith("-"))) {
-      setDisplay("0");
-    } else {
-      setDisplay(display.slice(0, -1));
+  const performOperation = (nextOperator: string) => {
+    const inputValue = parseFloat(display);
+
+    if (firstOperand === null) {
+      setFirstOperand(inputValue);
+    } else if (operator) {
+      const result = calculate(firstOperand, inputValue, operator);
+      setDisplay(String(result));
+      setFirstOperand(result);
+    }
+
+    setWaitingForSecondOperand(true);
+    setOperator(nextOperator);
+  };
+
+  const calculate = (firstOperand: number, secondOperand: number, operator: string) => {
+    switch (operator) {
+      case "+":
+        return firstOperand + secondOperand;
+      case "-":
+        return firstOperand - secondOperand;
+      case "×":
+        return firstOperand * secondOperand;
+      case "÷":
+        return firstOperand / secondOperand;
+      default:
+        return secondOperand;
     }
   };
 
-  const handlePercentage = () => {
-    const value = parseFloat(display) / 100;
-    setDisplay(String(value));
-  };
-
-  const handleSignChange = () => {
-    if (display !== "0") {
-      setDisplay(display.startsWith("-") ? display.slice(1) : "-" + display);
+  const handleEquals = () => {
+    if (firstOperand === null || operator === null) {
+      return;
     }
+
+    const inputValue = parseFloat(display);
+    const result = calculate(firstOperand, inputValue, operator);
+    setDisplay(String(result));
+    setFirstOperand(result);
+    setOperator(null);
+    setWaitingForSecondOperand(true);
   };
 
   return (
-    <div className="bg-card border rounded-2xl shadow-lg overflow-hidden w-full max-w-[320px]">
-      <div className="p-4 border-b bg-muted/30">
-        <div className="text-right min-h-[60px] flex flex-col items-end justify-center">
-          {operation && (
-            <div className="text-sm text-muted-foreground mb-1">
-              {previousValue} {operation}
-            </div>
-          )}
-          <div className="text-3xl font-medium tracking-tighter overflow-x-auto max-w-full">
-            {display}
-          </div>
+    <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-xs">
+      <div className="p-4 bg-gray-800 text-right">
+        <div className="text-3xl font-light text-white overflow-auto h-16 flex items-center justify-end">
+          {display}
         </div>
       </div>
-      
-      <div className="grid grid-cols-4 gap-1 p-2">
-        {/* Row 1 */}
+      <div className="grid grid-cols-4 gap-1 p-2 bg-gray-100">
         <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={handleClear}
+          variant="outline"
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-lg h-14"
+          onClick={clearDisplay}
         >
           C
         </Button>
         <Button
-          variant="ghost" 
-          className="text-base font-medium aspect-square"
-          onClick={handleSignChange}
+          variant="outline"
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-lg h-14"
+          onClick={() => setDisplay(display.slice(0, -1) || "0")}
+        >
+          ←
+        </Button>
+        <Button
+          variant="outline"
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-lg h-14"
+          onClick={() => setDisplay(String(parseFloat(display) * -1))}
         >
           +/-
         </Button>
         <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={handlePercentage}
+          variant="outline"
+          className="bg-amber-500 hover:bg-amber-600 text-white text-lg h-14"
+          onClick={() => performOperation("÷")}
         >
-          %
+          <Divide size={20} />
         </Button>
+
+        {[7, 8, 9].map((num) => (
+          <Button
+            key={num}
+            variant="outline"
+            className="bg-gray-50 hover:bg-gray-200 text-gray-800 text-lg h-14"
+            onClick={() => inputDigit(num.toString())}
+          >
+            {num}
+          </Button>
+        ))}
         <Button
-          variant="ghost"
-          className="text-base font-medium text-orange-500 aspect-square"
-          onClick={() => handleOperationClick("÷")}
+          variant="outline"
+          className="bg-amber-500 hover:bg-amber-600 text-white text-lg h-14"
+          onClick={() => performOperation("×")}
         >
-          <Divide className="h-5 w-5" />
+          <X size={20} />
         </Button>
-        
-        {/* Row 2 */}
+
+        {[4, 5, 6].map((num) => (
+          <Button
+            key={num}
+            variant="outline"
+            className="bg-gray-50 hover:bg-gray-200 text-gray-800 text-lg h-14"
+            onClick={() => inputDigit(num.toString())}
+          >
+            {num}
+          </Button>
+        ))}
         <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("7")}
+          variant="outline"
+          className="bg-amber-500 hover:bg-amber-600 text-white text-lg h-14"
+          onClick={() => performOperation("-")}
         >
-          7
+          <Minus size={20} />
         </Button>
+
+        {[1, 2, 3].map((num) => (
+          <Button
+            key={num}
+            variant="outline"
+            className="bg-gray-50 hover:bg-gray-200 text-gray-800 text-lg h-14"
+            onClick={() => inputDigit(num.toString())}
+          >
+            {num}
+          </Button>
+        ))}
         <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("8")}
+          variant="outline"
+          className="bg-amber-500 hover:bg-amber-600 text-white text-lg h-14"
+          onClick={() => performOperation("+")}
         >
-          8
+          <Plus size={20} />
         </Button>
+
         <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("9")}
-        >
-          9
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium text-orange-500 aspect-square"
-          onClick={() => handleOperationClick("×")}
-        >
-          <X className="h-5 w-5" />
-        </Button>
-        
-        {/* Row 3 */}
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("4")}
-        >
-          4
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("5")}
-        >
-          5
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("6")}
-        >
-          6
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium text-orange-500 aspect-square"
-          onClick={() => handleOperationClick("-")}
-        >
-          <Minus className="h-5 w-5" />
-        </Button>
-        
-        {/* Row 4 */}
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("1")}
-        >
-          1
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("2")}
-        >
-          2
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("3")}
-        >
-          3
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium text-orange-500 aspect-square"
-          onClick={() => handleOperationClick("+")}
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-        
-        {/* Row 5 */}
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={handleDelete}
-        >
-          <Delete className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={() => handleNumberClick("0")}
+          variant="outline"
+          className="bg-gray-50 hover:bg-gray-200 text-gray-800 text-lg h-14 col-span-2"
+          onClick={() => inputDigit("0")}
         >
           0
         </Button>
         <Button
-          variant="ghost"
-          className="text-base font-medium aspect-square"
-          onClick={handleDecimalClick}
+          variant="outline"
+          className="bg-gray-50 hover:bg-gray-200 text-gray-800 text-lg h-14"
+          onClick={inputDecimal}
         >
           .
         </Button>
         <Button
-          variant="ghost"
-          className={cn(
-            "text-base font-medium aspect-square",
-            "bg-orange-500 text-white hover:bg-orange-600 hover:text-white"
-          )}
-          onClick={handleEqualsClick}
+          variant="outline"
+          className="bg-amber-500 hover:bg-amber-600 text-white text-lg h-14"
+          onClick={handleEquals}
         >
-          <Equal className="h-5 w-5" />
+          <Equal size={20} />
         </Button>
       </div>
     </div>
