@@ -1,19 +1,13 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster } from "./components/ui/toaster";
-import { CurrencyConverter } from "./components/CurrencyConverter";
+import React from 'react';
+import { RegistrationForm } from './components/RegistrationForm';
+import { Toaster } from './components/ui/toaster';
 
 function App() {
   return (
-    <BrowserRouter>
-      <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <Routes>
-            <Route path="/" element={<CurrencyConverter />} />
-          </Routes>
-        </div>
-      </main>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <RegistrationForm />
       <Toaster />
-    </BrowserRouter>
+    </div>
   );
 }
 
