@@ -1,13 +1,16 @@
-import { useState } from "react";
-import { Calculator } from "./components/Calculator";
-import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { Calendar } from "./pages/Calendar";
 
-function App() {
+export default function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <Calculator />
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen bg-background">
+        <Routes>
+          <Route path="/" element={<Calendar />} />
+        </Routes>
+        <Toaster />
+      </div>
+    </BrowserRouter>
   );
 }
-
-export default App;
