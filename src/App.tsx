@@ -1,16 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Calendar } from "./pages/Calendar";
+import LoginPage from "./pages/Login";
 
-export default function App() {
+function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-background">
-        <Routes>
-          <Route path="/" element={<Calendar />} />
-        </Routes>
-        <Toaster />
-      </div>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
     </BrowserRouter>
   );
 }
+
+export default App;
