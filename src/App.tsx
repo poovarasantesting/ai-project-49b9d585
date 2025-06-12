@@ -1,13 +1,16 @@
-import { Toaster } from "@/components/ui/toaster";
-import { RegisterForm } from "@/components/RegisterForm";
+import { Calculator } from "./components/Calculator";
+import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "./components/ui/toaster";
 
-export default function App() {
+function App() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center p-4">
-      <div className="container mx-auto">
-        <RegisterForm />
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Calculator />
       </div>
       <Toaster />
-    </div>
+    </ThemeProvider>
   );
 }
+
+export default App;
