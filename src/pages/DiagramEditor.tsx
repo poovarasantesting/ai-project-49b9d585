@@ -1,221 +1,136 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import ReactFlow, {
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Connection,
-  Edge,
-  Panel,
-  MarkerType,
-} from "reactflow";
-import "reactflow/dist/style.css";
-import { useDiagramStore } from "../store/diagramStore";
-import { Layout } from "../components/Layout";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { ShapeNode } from "../components/diagram/ShapeNode";
-import { TextNode } from "../components/diagram/TextNode";
-import { ImageNode } from "../components/diagram/ImageNode";
-import { NodeTypeSelector } from "../components/diagram/NodeTypeSelector";
-import { Save, ArrowLeft, Trash2 } from "lucide-react";
-import { useToast } from "../components/ui/use-toast";
-import { v4 as uuidv4 } from 'uuid';
+import { useState } from 'react';
+import ReactFlow, { 
+  Background, 
+  Controls, 
+  MiniMap, 
+  addEdge, 
+  applyEdgeChanges, 
+  applyNodeChanges
+} from 'react-flow-renderer';
+import { Link } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Separator } from '../components/ui/separator';
+import DiagramToolbar from '../components/diagram/DiagramToolbar';
+import NodePanel from '../components/diagram/NodePanel';
+import { 
+  ChevronLeft, 
+  Download, 
+  Save
+} from 'lucide-react';
+import { useToast } from '../components/ui/use-toast';
 
-// Define the node types for ReactFlow
-const nodeTypes = {
-  shape: ShapeNode,
-  text: TextNode,
-  image: ImageNode,
-};
+const initialNodes = [
+  {
+    id: '1',
+    type: 'input',
+    data: { label: 'Start' },
+    position: { x: 250, y: 25 },
+  },
+];
 
 export default function DiagramEditor() {
-  const { id } = useParams();
+  const [nodes, setNodes] = useState(initialNodes);
+  const [edges, setEdges] = useState([]);
+  const [diagramName, setDiagramName] = useState('Untitled Diagram');
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const { getDiagram, saveDiagram, removeDiagram } = useDiagramStore();
-  
-  // Initialize with saved diagram or new one
-  const diagram = id ? getDiagram(id) : null;
-  const [diagramName, setDiagramName] = useState(diagram?.name || "Untitled Diagram");
-  const [nodes, setNodes, onNodesChange] = useNodesState(diagram?.nodes || []);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(diagram?.edges || []);
-  
-  // Handle connections between nodes
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => 
-      addEdge({ 
-        ...params, 
-        type: 'smoothstep', 
-        markerEnd: { type: MarkerType.Arrow } 
-      }, eds)),
-    [setEdges]
-  );
 
-  // Save the diagram to store
+  const onNodesChange = (changes) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  };
+
+  const onEdgesChange = (changes) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  };
+
+  const onConnect = (connection) => {
+    setEdges((eds) => addEdge(connection, eds));
+  };
+
   const handleSave = () => {
-    const diagramData = {
-      id: id || uuidv4(),
-      name: diagramName,
-      nodes,
-      edges,
-      lastEdited: Date.now(),
-    };
-    
-    saveDiagram(diagramData);
-    
+    // In a real app, this would save to a backend or local storage
     toast({
       title: "Diagram saved",
-      description: "Your diagram has been successfully saved."
+      description: `${diagramName} has been saved successfully.`,
     });
+  };
+
+  const handleExport = () => {
+    // In a real app, this would export the diagram as an image or JSON
+    const dataStr = JSON.stringify({ nodes, edges, name: diagramName });
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    if (!id) {
-      navigate(`/editor/${diagramData.id}`);
-    }
+    const exportFileDefaultName = `${diagramName.replace(/\s+/g, '-').toLowerCase()}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    toast({
+      title: "Diagram exported",
+      description: `${diagramName} has been exported as JSON.`,
+    });
   };
-
-  // Handle drag and drop from the shape selector
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-
-      if (!reactFlowWrapper.current || !reactFlowInstance) return;
-
-      const type = event.dataTransfer.getData('application/reactflow');
-      
-      // Check if the dropped element is valid
-      if (!type) return;
-
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      let newNode;
-      
-      switch (type) {
-        case 'shape':
-          newNode = {
-            id: `shape_${uuidv4()}`,
-            type,
-            position,
-            data: { shape: 'rectangle', width: 100, height: 60, color: '#c8e6c9' },
-          };
-          break;
-        case 'text':
-          newNode = {
-            id: `text_${uuidv4()}`,
-            type,
-            position,
-            data: { text: 'Edit this text', fontSize: 16 },
-          };
-          break;
-        case 'image':
-          newNode = {
-            id: `image_${uuidv4()}`,
-            type,
-            position,
-            data: { 
-              src: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?q=80&w=250&auto=format&fit=crop',
-              width: 150,
-              height: 100
-            },
-          };
-          break;
-        default:
-          return;
-      }
-
-      setNodes((nds) => nds.concat(newNode));
-    },
-    [reactFlowInstance, setNodes]
-  );
-
-  const handleDelete = () => {
-    if (id) {
-      removeDiagram(id);
-      toast({
-        title: "Diagram deleted",
-        description: "Your diagram has been successfully deleted."
-      });
-      navigate('/');
-    }
-  };
-
-  // Auto-save on changes
-  useEffect(() => {
-    const autoSaveTimer = setTimeout(() => {
-      if (nodes.length > 0 || edges.length > 0) {
-        handleSave();
-      }
-    }, 30000); // Auto-save every 30 seconds
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [nodes, edges, diagramName]);
 
   return (
-    <Layout>
-      <div className="flex flex-col h-screen">
-        <div className="flex justify-between items-center p-4 border-b">
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <header className="bg-white dark:bg-slate-800 shadow-sm border-b dark:border-slate-700 p-4">
+        <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')} className="flex items-center gap-2">
-              <ArrowLeft size={18} /> Back
-            </Button>
-            <Input
-              value={diagramName}
-              onChange={(e) => setDiagramName(e.target.value)}
-              className="w-64 font-medium"
-            />
+            <Link to="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ChevronLeft size={16} />
+                Back
+              </Button>
+            </Link>
+            <Separator orientation="vertical" className="h-6" />
+            <div>
+              <input
+                type="text"
+                value={diagramName}
+                onChange={(e) => setDiagramName(e.target.value)}
+                className="text-xl font-semibold bg-transparent border-0 border-b border-transparent hover:border-slate-300 focus:border-slate-400 focus:outline-none p-1"
+              />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="destructive" 
-              className="flex items-center gap-2"
-              onClick={handleDelete}
-            >
-              <Trash2 size={18} /> Delete
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+              <Download size={16} />
+              Export
             </Button>
-            <Button onClick={handleSave} className="flex items-center gap-2">
-              <Save size={18} /> Save
+            <Button size="sm" className="gap-2" onClick={handleSave}>
+              <Save size={16} />
+              Save
             </Button>
           </div>
         </div>
-        
-        <div className="flex flex-grow overflow-hidden">
-          <div className="w-64 p-4 border-r overflow-y-auto">
-            <h3 className="font-medium mb-4">Diagram Elements</h3>
-            <NodeTypeSelector />
-          </div>
-          
-          <div className="flex-grow" ref={reactFlowWrapper}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onInit={setReactFlowInstance}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              nodeTypes={nodeTypes}
-              deleteKeyCode="Delete"
-              fitView
-            >
-              <Controls />
-              <Background color="#aaa" gap={16} />
-            </ReactFlow>
-          </div>
+      </header>
+
+      {/* Toolbar */}
+      <DiagramToolbar />
+
+      {/* Main Editor Area */}
+      <div className="flex-1 flex">
+        {/* Left Panel */}
+        <NodePanel setNodes={setNodes} nodes={nodes} />
+
+        {/* Diagram Canvas */}
+        <div className="flex-1 h-full">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            fitView
+          >
+            <Controls />
+            <MiniMap />
+            <Background variant="dots" gap={12} size={1} />
+          </ReactFlow>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
