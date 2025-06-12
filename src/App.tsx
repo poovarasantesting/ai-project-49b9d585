@@ -1,18 +1,12 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "sonner";
 import { LoginForm } from "./components/LoginForm";
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" richColors />
-      <Routes>
-        <Route path="/" element={<LoginForm />} />
-        <Route path="/dashboard" element={<div className="p-8 text-center">Dashboard (To be implemented)</div>} />
-        <Route path="/forgot-password" element={<div className="p-8 text-center">Forgot Password (To be implemented)</div>} />
-        <Route path="/register" element={<div className="p-8 text-center">Register (To be implemented)</div>} />
-      </Routes>
-    </BrowserRouter>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <LoginForm />
+      <Toaster />
+    </div>
   );
 }
 
